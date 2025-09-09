@@ -6,10 +6,11 @@ import {
   UsergroupAddOutlined,
   SettingOutlined,
   LoginOutlined,
-  LogoutOutlined
+  LogoutOutlined,
+  ProductOutlined
 } from '@ant-design/icons';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { AuthContext } from '../context/auth.context';
+import AuthContext from '../context/auth.context';
 
 const Header = () => {
   const { auth, logout, setAuth } = useContext(AuthContext);
@@ -43,6 +44,12 @@ const Header = () => {
         icon: <UsergroupAddOutlined />
       });
     }
+
+    arr.push({
+        label: <Link to="/products">Product</Link>,
+        key: 'products',
+        icon: <ProductOutlined />
+      });
 
     arr.push({
       label: `Welcome ${auth?.user?.email ?? ''}`,

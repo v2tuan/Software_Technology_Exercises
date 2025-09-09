@@ -4,7 +4,7 @@ import { Button, Col, Divider, Form, Input, notification, Row } from 'antd';
 import { loginApi } from '../util/api.js';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { AuthContext } from '../components/context/auth.context';
+import AuthContext from '../components/context/auth.context';
 
 const LoginPage = () => {
   const navigate = useNavigate();

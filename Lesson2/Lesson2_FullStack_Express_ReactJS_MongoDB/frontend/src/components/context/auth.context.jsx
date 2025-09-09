@@ -33,3 +33,5 @@ export const AuthWrapper = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+export default AuthContext;

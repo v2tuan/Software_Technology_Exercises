@@ -1,7 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import Header from './components/layout/header.jsx';
 import { useContext, useEffect } from 'react';
-import { AuthContext } from './components/context/auth.context.jsx';
+import AuthContext from './components/context/auth.context';
 import { Spin } from 'antd';
 import { getAccountApi } from './util/api'; // API trả về info user nếu có token
 
