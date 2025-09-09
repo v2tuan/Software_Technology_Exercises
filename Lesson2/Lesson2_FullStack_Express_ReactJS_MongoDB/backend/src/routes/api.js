@@ -8,6 +8,7 @@ const {
 } = require('../controllers/userController.js');
 const auth = require('../middleware/auth.js');
 const delay = require('../middleware/delay.js');
+const { productController } = require('../controllers/productController.js');
 
 const routerAPI = express.Router();
 
@@ -17,6 +18,8 @@ routerAPI.get('/', (req, res) => {
 });
 routerAPI.post('/register', createUser);
 routerAPI.post('/login', handleLogin);
+routerAPI.post('/seed', productController.seedData)
+routerAPI.get('/products', productController.getProducts)
 
 // ===== Protected routes =====
 routerAPI.use(auth);                // từ đây trở xuống yêu cầu auth
