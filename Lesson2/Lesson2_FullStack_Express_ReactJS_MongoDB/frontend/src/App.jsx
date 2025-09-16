@@ -12,8 +12,8 @@ function App() {
     const fetchAccount = async () => {
       setAppLoading(true);
       try {
-        // Backend của bạn có /v1/api/account trả về req.user
-        const res = await getAccountApi(); // kỳ vọng { email, name } hoặc { user:{...} }
+        // Backend có /v1/api/account trả về req.user
+        const res = await getAccountApi();
         const user = res?.user ?? res;
 
         if (user?.email) {

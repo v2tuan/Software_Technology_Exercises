@@ -26,13 +26,12 @@ import {
   EyeOutlined,
   StarFilled
 } from '@ant-design/icons';
+import { getCategories, getProducts } from '../util/api';
 
 const { Header, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 const { Panel } = Collapse;
-
-const API_BASE_URL = 'http://localhost:8888/v1/api';
 
 const ProductStore = () => {
   const [products, setProducts] = useState([]);
@@ -49,8 +48,7 @@ const ProductStore = () => {
   // Fetch categories
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/categories`);
-      const result = await response.json();
+      const result = await getCategories();
       if (result.success) {
         setCategories(result.data);
       }
@@ -76,8 +74,8 @@ const ProductStore = () => {
       if (selectedCategory) params.append('category', selectedCategory);
       if (searchTerm) params.append('search', searchTerm);
 
-      const response = await fetch(`${API_BASE_URL}/products?${params}`);
-      const result = await response.json();
+      const result = await getProducts(params);
+      // const result = await response.json();
 
       if (result.success) {
         const newProducts = result.data.products;

@@ -14,3 +14,8 @@ export const getUserApi = () =>
 
 export const getAccountApi = () =>
   axios.get(`${API_PREFIX}/account`);
+
+export const getCategories = () => axios.get(`${API_PREFIX}/categories`)
+
+export const getProducts = (params) =>
+  axios.get(`${API_PREFIX}/products`, {params})
