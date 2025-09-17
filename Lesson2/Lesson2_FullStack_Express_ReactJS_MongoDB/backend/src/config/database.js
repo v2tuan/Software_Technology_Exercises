@@ -1,6 +1,7 @@
+const { default: mongoose } = require('mongoose');
+const { createProductIndex, importProductToES } = require('../utils/syncProduct');
 // src/config/database.js
 require('dotenv').config();
-const mongoose = require('mongoose');
 
 const dbState = [
   { value: 0, label: 'Disconnected' },
@@ -18,8 +19,11 @@ const connection = async () => {
     const state = Number(mongoose.connection.readyState);
     const label = (dbState.find(f => f.value === state) || {}).label || 'Unknown';
     console.log(label, 'to database');
+
+    await createProductIndex()
+    await importProductToES()
   } catch (err) {
-    console.error('MongoDB connection failed:', err.message);
+    console.error('MongoDB connection failed:', err);
     process.exit(1);
   }
 };

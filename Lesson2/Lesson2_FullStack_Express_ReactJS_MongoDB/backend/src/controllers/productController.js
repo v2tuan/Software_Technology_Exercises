@@ -1,77 +1,165 @@
+import esClient from "../config/elasticSearch.js"
 import Category from "../models/categoryModel.js"
-import Product from"../models/productModel.js"
+import Product from "../models/productModel.js"
 
 // Get product
 const getProducts = async (req, res) => {
-    try{
-        const {
-            page = 1,
-            limit = 12,
-            category,
-            search,
-            sortBy = 'createdAt',
-            sortOrder = 'desc',
-            minPrice,
-            maxPrice
-        } = req.query
+  try {
+    const {
+      page = 1,
+      limit = 12,
+      category,
+      search,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      minPrice,
+      maxPrice
+    } = req.query
 
-        // filter
-        const filter = { isActive: true}
+    const from = (parseInt(page) - 1) * parseInt(limit)
 
-        if(category){
-            filter.category = category
-        }
+    // Elasticsearch query
+    let must = [{ match: { isActive: true } }]
+    let filter = []
 
-        if(search){
-            filter.$or = [
-                {name: {$regex: search, $options: 'i'}},
-                {description: {$regex: search, $options: 'i'}},
-                {tags: {$in: [new RegExp(search, 'i')]}}
-            ]
-        }
-
-        if(minPrice || maxPrice){
-            filter.price = {}
-            if(minPrice) filter.price.$gte = parseFloat(minPrice)
-            if(maxPrice) filter.price.$lte = parseFloat(maxPrice)
-        }
-
-        const sort = {}
-        sort[sortBy] = sortOrder === 'asc' ? 1 : -1
-
-        const skip = (parseInt(page) - 1) * parseInt(limit)
-
-        const products = await Product.find(filter)
-        .populate('category', 'name slug')
-        .sort(sort)
-        .skip(skip)
-        .limit(parseInt(limit))
-
-        const totalProducts = await Product.countDocuments(filter)
-        const totalPages = Math.ceil(totalProducts/parseInt(limit))
-
-        res.json({
-            success: true,
-            data: {
-                products,
-                pagination: {
-                    currentPage: parseInt(page),
-                    totalPages,
-                    totalProducts,
-                    hasNextPage: parseInt(page) < totalPages,
-                    hasPrevPage: parseInt(page) > 1
-                }
-            }
-        })
+    if (category) {
+      must.push({ match: { category: category } })
     }
-    catch(error){
-        console.log(error)
-        res.status(500).json({
-            success: false,
-            message: 'Lỗi khi lấy danh sách sản phẩm',
-            error
-        })
+
+    if (search) {
+      must.push({
+        multi_match: {
+          query: search,
+          fields: ['name^3', 'description', 'tags'], // ^3 để ưu tiên fields name
+          fuzziness: 'AUTO'
+        }
+      })
     }
+
+    if (minPrice || maxPrice) {
+      let range = {}
+      if (minPrice) range.$gte = parseFloat(minPrice)
+      if (maxPrice) range.$lte = parseFloat(maxPrice)
+      filter.push({ range: { price: range } })
+    }
+
+    const sort = {}
+    sort[sortBy] = {order: sortOrder}
+    
+    const result = await esClient.search({
+      index: 'products',
+      from,
+      size: parseInt(limit),
+      query: {
+        bool: {
+          must,
+          filter
+        }
+      },
+      sort: [sort]
+    })
+
+    const products = result.hits.hits.map(hit => ({
+      id: hit._id,
+      ...hit._source
+    }))
+
+    const totalProducts = result.hits.total.value
+    const totalPages = Math.ceil(totalProducts/parseInt(limit))
+
+    res.json({
+      success: true,
+      data: {
+        products,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages,
+          totalProducts,
+          hasNextPage: parseInt(page) < totalPages,
+          hasPrevPage: parseInt(page) > 1
+        }
+      }
+    })
+  } catch(error){
+    console.error(error)
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi lấy danh sách sản phẩm từ Elasticsearch',
+      error
+    })
+  }
+}
+// Get productMongo
+const getProductss = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 12,
+      category,
+      search,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      minPrice,
+      maxPrice
+    } = req.query
+
+    // filter
+    const filter = { isActive: true }
+
+    if (category) {
+      filter.category = category
+    }
+
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { tags: { $in: [new RegExp(search, 'i')] } }
+      ]
+    }
+
+    if (minPrice || maxPrice) {
+      filter.price = {}
+      if (minPrice) filter.price.$gte = parseFloat(minPrice)
+      if (maxPrice) filter.price.$lte = parseFloat(maxPrice)
+    }
+
+    const sort = {}
+    sort[sortBy] = sortOrder === 'asc' ? 1 : -1
+
+    const skip = (parseInt(page) - 1) * parseInt(limit)
+
+    const products = await Product.find(filter)
+      .populate('category', 'name slug')
+      .sort(sort)
+      .skip(skip)
+      .limit(parseInt(limit))
+
+    const totalProducts = await Product.countDocuments(filter)
+    const totalPages = Math.ceil(totalProducts / parseInt(limit))
+
+    res.json({
+      success: true,
+      data: {
+        products,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages,
+          totalProducts,
+          hasNextPage: parseInt(page) < totalPages,
+          hasPrevPage: parseInt(page) > 1
+        }
+      }
+    })
+  }
+  catch (error) {
+    console.log(error)
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi lấy danh sách sản phẩm',
+      error
+    })
+  }
 }
 
 const seedData = async (req, res) => {
@@ -199,6 +287,6 @@ const seedData = async (req, res) => {
 }
 
 export const productController = {
-    getProducts,
-    seedData
+  getProducts,
+  seedData
 }
